@@ -2,27 +2,58 @@ const express = require("express");
 var router = express.Router();
 const Todo = require("../models/Todo");
 
-/* GET users listing. */
-router.get("/", (req, res, next) => {
-  res.send({ message: "to do endpoint" });
+/* CREATE */
+router.post("/", async (req, res, next) => {
+  try {
+    const newTodo = new Todo(req.body);
+    await newTodo.save();
+    res.send({ message: "Created Todo succefull" });
+  } catch (err) {
+    res.status(404);
+    res.send({ err });
+  }
 });
 
-router.post("/", (req, res, next) => {
-  const dataToSave = req.body;
-
-  new Todo(dataToSave).save();
-
-  res.send({ message: "Created Todo succefull" });
+/* READ */
+router.get("/", async (req, res, next) => {
+  const todos = await Todo.find();
+  res.send(todos);
 });
 
+router.get("/:id", async (req, res) => {
+  try {
+    const todo = await Todo.findOne({ _id: req.params.id });
+    res.send(todo);
+  } catch (err) {
+    res.status(404);
+    res.send({ error: "Todo doesn't exist!" });
+  }
+});
+
+/* UPDATE */
 router.put("/:id", async (req, res, next) => {
   const dataToUpdate = req.body;
   const { id } = req.params;
 
-  console.log(req.params);
-  await Todo.updateOne({ _id: id }, dataToUpdate);
+  try {
+    await Todo.updateOne({ _id: id }, dataToUpdate);
+    res.send({ message: "Updated Todo succefull!" });
+  } catch (err) {
+    res.status(404);
+    res.send({ error: "Could not update!" });
+  }
+});
 
-  res.send({ message: "Updated Todo succefull" });
+/* DELETE */
+router.delete("/:id", async (req, res, next) => {
+  try {
+    await Todo.deleteOne({ _id: req.params.id });
+    res.status(204).send();
+    res.send({ error: "Deleted succefully" });
+  } catch {
+    res.status(404);
+    res.send({ error: "Todo doesn't exist!" });
+  }
 });
 
 module.exports = router;
